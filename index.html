@@ -60,12 +60,16 @@ header{position:sticky;top:0;z-index:20;background:rgba(246,247,249,.95);
 
 .zh{margin-top:auto;padding-top:8px;font-size:12.5px;color:var(--sub);line-height:1.45;
   max-height:0;opacity:0;overflow:hidden;transition:.18s;border-top:1px dashed transparent}
-.card.open .zh{max-height:160px;opacity:1;margin-top:8px;border-top-color:var(--line)}
+.card.open .zh{max-height:280px;opacity:1;margin-top:8px;border-top-color:var(--line)}
+.zh .tip{margin-top:8px;padding-top:7px;border-top:1px dashed var(--line);
+  font-size:11.5px;line-height:1.6;color:var(--blue)}
 
 footer{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(255,255,255,.97);
   backdrop-filter:blur(12px);border-top:1px solid var(--line);
-  padding:9px 14px calc(9px + env(safe-area-inset-bottom));
-  display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--sub)}
+  padding:9px 10px calc(9px + env(safe-area-inset-bottom));
+  display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--sub)}
+footer .chip{padding:6px 9px;font-size:12px}
+footer .item{gap:4px}
 footer .item{display:flex;align-items:center;gap:5px}
 .sw{width:40px;height:23px;border-radius:12px;background:#d8dbe1;position:relative;transition:.18s;flex:0 0 auto}
 .sw::after{content:"";position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;
@@ -102,6 +106,17 @@ textarea:focus{border-color:var(--blue)}
 .btn.ghost{background:#f1f3f6;color:#333}
 .btn.danger{background:#fdecec;color:#c0392b}
 .help li{font-size:13px;line-height:1.85;color:#444}
+/* 记法面板 */
+.mtip{font-size:12px;color:#8a8f99;line-height:1.65;margin:0 0 14px}
+.mh{font-size:13.5px;margin:18px 0 8px;color:#1a1a1a;font-weight:650}
+.mh:first-of-type{margin-top:6px}
+.mtable{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.mrow{display:flex;gap:9px;padding:7px 10px;font-size:12px;line-height:1.55;border-top:1px solid var(--line)}
+.mrow:first-child{border-top:0}
+.mk{flex:0 0 46%;color:var(--blue);word-break:break-word;font-weight:500}
+.mv{flex:1;color:#444}
+.mpre{background:#f7f8fa;border-radius:10px;padding:11px 12px;font-size:11.5px;line-height:1.8;
+  font-family:ui-monospace,Menlo,Consolas,monospace;margin:0;overflow-x:auto;color:#333;white-space:pre}
 
 #toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(12px);
   background:rgba(20,22,26,.9);color:#fff;font-size:13px;padding:10px 18px;border-radius:20px;
@@ -134,6 +149,7 @@ textarea:focus{border-color:var(--blue)}
   <div class="item"><div class="sw on" id="swZh"></div><span>汉语</span></div>
   <div class="item"><div class="sw" id="swSlow"></div><span>慢速</span></div>
   <div class="grow"></div>
+  <button class="chip" id="btnMethod">记法</button>
   <button class="chip" id="btnAccent">美音</button>
   <button class="chip" id="btnHelp">说明</button>
 </footer>
@@ -190,6 +206,105 @@ textarea:focus{border-color:var(--blue)}
       <b>发音源</b>：默认用有道词典的真人录音（美音），点底部「美音/英音」可切换。
       没网络时会自动退回系统合成音。慢速开关对真人音是放慢播放，不改变音调。
     </p>
+  </div>
+</div>
+
+
+<!-- 记法 -->
+<div class="sheet" id="sheetMethod">
+  <div class="box">
+    <h2>记单词的四种方法</h2>
+    <p class="mtip">按好用程度排序。看到能拆的就拆（3 秒够了），拆不了直接硬记，别硬编故事。</p>
+
+    <h3 class="mh">① 合成词拆 —— 最直观</h3>
+    <div class="mtable">
+      <div class="mrow"><span class="mk">under + graduate</span><span class="mv">还没毕业 → 本科生</span></div>
+      <div class="mrow"><span class="mk">under + take</span><span class="mv">把担子拿到身下 → 承担</span></div>
+      <div class="mrow"><span class="mk">under + ground</span><span class="mv">地下的 → 地铁</span></div>
+      <div class="mrow"><span class="mk">under + line</span><span class="mv">在下面划线 → 强调</span></div>
+      <div class="mrow"><span class="mk">under + neath</span><span class="mv">在下面 → 在……下面</span></div>
+      <div class="mrow"><span class="mk">back + ground</span><span class="mv">后面的场地 → 背景</span></div>
+      <div class="mrow"><span class="mk">head + line</span><span class="mv">头一行 → 标题</span></div>
+      <div class="mrow"><span class="mk">dead + line</span><span class="mv">死线 → 截止日期</span></div>
+      <div class="mrow"><span class="mk">broad + cast</span><span class="mv">广泛撒播 → 广播</span></div>
+      <div class="mrow"><span class="mk">broad + en</span><span class="mv">使宽 → 变宽，扩展</span></div>
+      <div class="mrow"><span class="mk">fresh + man</span><span class="mv">新来的人 → 大一新生</span></div>
+      <div class="mrow"><span class="mk">scholar + ship</span><span class="mv">学者身份 → 奖学金</span></div>
+      <div class="mrow"><span class="mk">neighbour + hood</span><span class="mv">邻居们那片 → 街区</span></div>
+    </div>
+    <p class="mtip" style="margin-top:8px">`under-` 一家开了 5 个词的头，记住一个等于拿下五个。</p>
+
+    <h3 class="mh">② 前缀 —— 一个前缀管几十个词</h3>
+    <div class="mtable">
+      <div class="mrow"><span class="mk">en- 使</span><span class="mv">enable 使能够</span></div>
+      <div class="mrow"><span class="mk">un- 不、相反</span><span class="mv">uncover 揭开</span></div>
+      <div class="mrow"><span class="mk">dis- 去掉</span><span class="mv">discover 发现；disabled 残疾的</span></div>
+      <div class="mrow"><span class="mk">mis- 错</span><span class="mv">misunderstand 误解</span></div>
+      <div class="mrow"><span class="mk">im- 向内</span><span class="mv">immigrate 移入</span></div>
+      <div class="mrow"><span class="mk">in- 里面</span><span class="mv">inhabit 居住于</span></div>
+      <div class="mrow"><span class="mk">fore- 前</span><span class="mv">foresee 预见</span></div>
+      <div class="mrow"><span class="mk">ex- 出</span><span class="mv">except 除外</span></div>
+      <div class="mrow"><span class="mk">a- 使、去</span><span class="mv">avoid 避开（让路空出来）</span></div>
+    </div>
+
+    <h3 class="mh">③ 同族串联 —— 一次记一串</h3>
+    <pre class="mpre">able 能够
+ ├ ability      能力
+ ├ enable       使能够
+ └ disabled     残疾的
+
+act 行动
+ ├ action       行为
+ ├ active       积极的
+ └ activity     活动
+
+cover 盖
+ ├ discover     去掉盖子 → 发现
+ └ uncover      揭开
+
+profess 声称
+ ├ profession   职业
+ ├ professional 职业的
+ └ professor    教授
+
+migrate 迁移
+ ├ immigrate    移入
+ └ migration    迁移
+
+comprehend 理解
+ ├ comprehension 理解力
+ └ comprehensive 全面的</pre>
+
+    <h3 class="mh">④ 两大词根 —— 一次管十几个</h3>
+    <div class="mtable">
+      <div class="mrow"><span class="mk">combine</span><span class="mv">com(一起)+bine(两个) → 结合</span></div>
+      <div class="mrow"><span class="mk">compound</span><span class="mv">com+pound(放) → 放一起 → 混合物</span></div>
+      <div class="mrow"><span class="mk">complex</span><span class="mv">com+plex(编织) → 编在一起 → 复杂的</span></div>
+      <div class="mrow"><span class="mk">community</span><span class="mv">com+mun(服务) → 互相服务 → 社区</span></div>
+      <div class="mrow"><span class="mk">communicate</span><span class="mv">com+mun → 一起分享 → 交流</span></div>
+      <div class="mrow"><span class="mk">comprehensive</span><span class="mv">com+prehens(抓) → 全抓住 → 全面的</span></div>
+      <div class="mrow"><span class="mk">comprehension</span><span class="mv">com+prehens(抓) → 抓住意思 → 理解力</span></div>
+      <div class="mrow"><span class="mk">captain</span><span class="mv">capt(头)+ain(人) → 头头 → 船长</span></div>
+      <div class="mrow"><span class="mk">capital</span><span class="mv">capit(头) → 首都／资本／大写字母</span></div>
+      <div class="mrow"><span class="mk">capture</span><span class="mv">capt(抓) → 抓住 → 捕获</span></div>
+      <div class="mrow"><span class="mk">capable</span><span class="mv">cap(拿得住)+able → 有能力的</span></div>
+      <div class="mrow"><span class="mk">capacity</span><span class="mv">cap+acity → 能装多少 → 容量</span></div>
+    </div>
+
+    <h3 class="mh">⑤ 谐音 —— 只对拆不了的用</h3>
+    <div class="mtable">
+      <div class="mrow"><span class="mk">avoid</span><span class="mv">「额，躲」→ 避开</span></div>
+      <div class="mrow"><span class="mk">campus</span><span class="mv">camp(营地)+us(我们) → 我们的营地 → 校园</span></div>
+    </div>
+
+    <p class="mtip" style="margin-top:14px">
+      过词的时候：能拆的心里拆一下，同族的想一下“还有谁是这家”，拆不了的直接硬记。
+      <b>方法是省时间的，不是加任务的。</b>
+    </p>
+
+    <div class="row" style="margin-top:16px">
+      <button class="btn ghost" data-close>关闭</button>
+    </div>
   </div>
 </div>
 
@@ -528,6 +643,203 @@ let globalZh = (lsGet(LS_ZH, '1') === '1');      // true = 全部显示汉语
 if(globalZh) swZh.classList.add('on'); else swZh.classList.remove('on');
 const swSlow= document.getElementById('swSlow');
 const CN    = ['', 's1', 's2', 's3'];
+
+/* 每个词怎么记 */
+const TIPS = {
+  "avoid": "a(去) + void(空)：让这条路空出来 → 避开",
+  "enable": "en(使) + able(能够) → 使能够",
+  "captain": "capt(头) + ain(人)：一群人的头 → 船长／机长／队长",
+  "behave": "be + have：看你“有什么表现” → 表现，举止",
+  "actual": "act(做) + ual：真做出来的 → 实际的",
+  "practice": "pract(做) + ice：反复做 → 练习（名词）",
+  "virtual": "电脑里“看着是真的、其实不是” → 虚拟的；引申“实际上的”",
+  "tuition": "tutor(导师)教你，要交钱 → 学费",
+  "capital": "capit(头) → 头：一国之头(首都)／钱之本(资本)／开头大写",
+  "capable": "cap(拿得住) + able → 拿得住的 → 有能力的",
+  "coach": "教练带一队人，像长途客车拉一车人 → 教练／长途车",
+  "training": "train(训练) + ing → 训练",
+  "able": "本身就是“能”",
+  "action": "act(做) + ion → 行为",
+  "capture": "capt(抓) + ure → 抓住 → 捕获",
+  "capacity": "cap(装) + acity：能装多少 → 容量；能扛多少 → 能力",
+  "exact": "ex(出) + act(做)：做得分毫不差 → 精确的",
+  "precise": "pre(先) + cise(切)：先切好的 → 精确的",
+  "active": "act(做) + ive → 爱做的 → 积极的",
+  "activity": "act + ivity → 活动",
+  "evade": "e(出) + vade(走)：抽身走掉 → 逃避",
+  "ability": "able(能) + ity → 能力",
+  "react": "re(回) + act(做)：对着回一手 → 反应",
+  "tutor": "一对一带你的人 → 导师／家教",
+  "train": "名词火车，动词训练：火车拖着一串车厢走 → 训练",
+  "practical": "practice(实践) + al → 实际的",
+  "practise": "英式写 practise 只作动词；美式一律 practice",
+  "handicap": "hand(手) + in + cap(帽)：手伸进帽子抽签 → 吃亏 → 障碍",
+  "act": "本身就是“做”",
+  "disabled": "dis(不) + abled(有能力的) → 残疾的",
+  "escape": "es(出) + cape(披风)：甩掉披风跑 → 逃跑",
+  "scholarship": "scholar(学者) + ship(身份) → 奖学金",
+  "campaign": "camp(野外) + aign：野外作战 → 战役 → 运动",
+  "expert": "ex(出) + pert(试过)：试出来的 → 专家",
+  "miracle": "mir(看) + acle：值得一看的怪事 → 奇迹",
+  "bloom": "花开那一下“噗”地爆开 → 花／开花",
+  "term": "学期／术语／任期，共同点都是“一段有限的期”",
+  "curriculum": "curr(跑) + iculum：你要跑完的那条路线 → 课程",
+  "camp": "营地",
+  "share": "把一份切给大家 → 分担；那一份 → 股份",
+  "educate": "e(出) + duc(引导) + ate：把潜能引出来 → 教育",
+  "cover": "盖",
+  "discover": "dis(去掉) + cover(盖) → 发现",
+  "pound": "磅／英镑。符号 £ 来自拉丁 libra pondo",
+  "complain": "com(加强) + plain(捶胸)：捶着胸口诉苦 → 抱怨",
+  "resort": "re(再) + sort(出去)：没辙了再去的地方 → 度假地／诉诸",
+  "loom": "织布机：布从机器里一点点“冒出来” → 隐约出现",
+  "mirror": "mir(看) + or：拿来看自己的东西 → 镜子",
+  "bury": "把 berry(浆果)埋进土里 → 埋葬／埋藏",
+  "relax": "re(再) + lax(松) → 放松",
+  "calm": "c-a-l-m：一口气念下来气就平了 → 平静",
+  "sort": "先分类，才有种类 → 种类／分类",
+  "professional": "profession(职业) + al → 职业的",
+  "ethic": "去掉 ethnic(民族的)的 n → 道德准则",
+  "recover": "re(再) + cover(盖)：重新盖好 → 康复／找回",
+  "education": "educate + ion → 教育",
+  "confess": "con(全) + fess(说)：全说出来 → 坦白",
+  "invite": "in(进) + vite(来)：请你进来 → 邀请",
+  "admire": "ad(向) + mir(看)：一直盯着看 → 钦佩",
+  "profession": "pro(前) + fess(说)：当众说自己干什么 → 职业",
+  "misery": "miser(可怜人) + y → 痛苦",
+  "boom": "拟声：隆～ 一声 → 隆隆声；生意炸开 → 激增",
+  "scholar": "school(学校)的亲戚：泡在学校里的人 → 学者",
+  "uncover": "un(去掉) + cover(盖) → 揭开",
+  "mask": "面具",
+  "mere": "mere = only，只此一个 → 仅仅",
+  "wire": "电线",
+  "worship": "worth(价值) + ship：认定它有价值 → 崇拜",
+  "sole": "sol(单独) → 唯一的；也指脚底 → 鞋底",
+  "compound": "com(一起) + pound(放) → 放一起 → 混合物",
+  "dare": "敢",
+  "complicate": "com + plic(折) + ate：折在一起 → 使复杂",
+  "moral": "mor(风俗) + al → 道德的",
+  "misunderstand": "mis(错) + understand(理解) → 误解",
+  "magic": "mag(大) + ic：大法师那套 → 魔法",
+  "mature": "时间到了就熟了 → 成熟的",
+  "professor": "profess(宣称) + or(人)：宣称自己懂的人 → 教授",
+  "bomb": "拟声“蹦” → 炸弹",
+  "boost": "boot(靴子)一脚踹上去 → 往上推 → 促进",
+  "campus": "camp(营地) + us(我们) → 我们的营地 → 校园",
+  "complex": "com + plex(编织)：编在一起 → 复杂的；楼盘成片 → 建筑群",
+  "screen": "既能挡、又能显示 → 屏幕",
+  "alarm": "al(向) + arm(武器)：喊大家拿武器 → 警报",
+  "academic": "academy(学院) + ic → 学术的",
+  "bend": "弯",
+  "principle": "prin(第一) + cip(拿) + le：摆在第一条的 → 原则",
+  "resident": "re(回) + sid(坐) + ent：坐回来的那群人 → 居民",
+  "besides": "be + side + s：在旁边 → 此外",
+  "freshman": "fresh(新) + man(人) → 大一新生",
+  "join": "加入",
+  "habit": "习惯；加 in 变 inhabit(住在里面)",
+  "integrate": "integr(完整) + ate → 使成一整块 → 合并",
+  "undergraduate": "under(未满) + graduate(毕业) → 还没毕业的 → 本科生",
+  "immigrate": "im(向内) + migrate(迁移) → 移进来",
+  "exception": "ex(出) + cept(拿) + ion：被拿出去的 → 例外",
+  "level": "水平",
+  "bond": "bind(捆)的名词：把人捆在一起的东西 → 纽带",
+  "dormitory": "dorm(睡) + itory(地方) → 睡觉的地方 → 宿舍",
+  "degree": "de + gree(级)：一格一格 → 程度；大学的格 → 学位",
+  "bridge": "桥",
+  "rank": "一排一排往下排 → 等级",
+  "course": "course 本义“跑”：跑的那一段 → 课程／过程",
+  "thesis": "the(放) + sis：把观点摆出来 → 论文／论点",
+  "separate": "se(分开) + par(准备) + ate → 分开",
+  "check": "检查",
+  "integrity": "integr(完整) + ity：完整 → 完整／为人完整 → 正直",
+  "bind": "捆",
+  "step": "步",
+  "scale": "尺子上的刻度 → 规模／等级",
+  "senior": "sen(老) + ior → 年长／级别高",
+  "connect": "con(一起) + nect(绑) → 连接",
+  "veteran": "打过仗的老人 → 老兵／老手",
+  "link": "连接",
+  "junior": "jun(年轻) + ior → 级别低／青少年",
+  "inhabit": "in(里面) + habit(住) → 住在里面",
+  "discipline": "disciple(徒弟)要守的 → 纪律；徒弟学的是 → 学科",
+  "examine": "exam(考试) + ine：考一遍 → 检查",
+  "joint": "join(连接) + t：两块骨头接的地方 → 关节",
+  "graduate": "grad(步) + uate：走完这一步 → 毕业",
+  "gradually": "grad(步) + ual + ly：一步一步地 → 逐渐",
+  "twist": "扭",
+  "case": "箱子／案子／情况，共同点是“一个具体的”",
+  "migration": "migrate + ion → 迁移",
+  "except": "ex(出) + cept(拿)：拿出去不算 → 除外",
+  "combine": "com(一起) + bine(两个) → 两个凑一起",
+  "principal": "prin(第一) + cip(拿) + al：拿第一位的 → 主要的／校长",
+  "sophisticated": "讲究到复杂 → 精密的；人见得多了 → 老练",
+  "president": "pre(前) + sid(坐) + ent：坐在最前面的人 → 总统／校长",
+  "forward": "for(前) + ward(方向) → 向前",
+  "undermine": "under(下面) + mine(挖)：从底下挖空 → 逐渐削弱",
+  "comprehensive": "com + prehens(抓) + ive：全抓住的 → 全面的",
+  "headline": "head(头) + line(行) → 头一行 → 头条",
+  "community": "com + mun(服务) + ity：互相服务的一群人 → 社区",
+  "aboard": "a(在) + board(甲板) → 在船上／车上",
+  "forth": "for(前) + th → 向前",
+  "touch": "碰到手 → 触摸；碰到心 → 感动",
+  "content": "con(一起) + tent(握住)：里面装的东西 → 内容；装满了 → 满足",
+  "thread": "一根线；把话串起来的那根线 → 思路",
+  "nature": "nat(出生) + ure：生下来就有的 → 自然／本性",
+  "attach": "at(向) + tach(钉)：钉上去 → 贴上",
+  "ground": "地面",
+  "branch": "树枝 → 分支",
+  "background": "back(后) + ground(场地) → 背景",
+  "foresee": "fore(前) + see(看) → 预见",
+  "social": "soci(同伴) + al → 社会的",
+  "wide": "宽",
+  "ahead": "a(在) + head(头)：在头前面 → 向前",
+  "wild": "野的",
+  "underground": "under(下面) + ground(地面) → 地铁",
+  "communicate": "com + mun(服务) + icate：互相通消息 → 交流",
+  "association": "associate + ion → 协会",
+  "tent": "帐篷：拉紧的那块布(tension 同源)",
+  "underneath": "under + neath(下面) → 在……下面",
+  "random": "随便抓一个 → 任意的",
+  "underline": "under(下) + line(线) → 划线；引申 强调",
+  "mostly": "most(大多) + ly → 主要地",
+  "adhere": "ad(向) + her(粘) + e → 附着；粘住规矩 → 遵循",
+  "bottom": "底部",
+  "contact": "con(一起) + tact(碰) → 接触",
+  "determine": "de(下) + termin(界限) + e：把界限定下来 → 决定",
+  "confront": "con + front(前额)：脸对脸 → 面对",
+  "nearby": "near(近) + by(旁边) → 附近的",
+  "stir": "搅动：一搅就动了 → 搅动；心里一搅 → 激动",
+  "natural": "nature + al → 自然的",
+  "bacteria": "细菌（单数是 bacterium）",
+  "undergo": "under(下) + go(走)：从底下走过去 → 经历",
+  "neighbour": "neigh(近) + bour(居民) → 邻居",
+  "outline": "out(外) + line(线)：外圈那条线 → 轮廓／梗概",
+  "satisfy": "satis(足够) + fy(使)：使足够 → 满足",
+  "mutual": "mut(交换) + ual → 相互的",
+  "associate": "as(向) + soci(同伴) + ate → 联系／同事",
+  "outdoors": "out(外) + doors(门) → 户外",
+  "width": "wide(宽) + th → 宽度",
+  "neighbourhood": "neighbour + hood(那一片) → 街区",
+  "broad": "宽",
+  "under": "在下面",
+  "nearly": "near(近) + ly → 差不多",
+  "comprehension": "com + prehens(抓) + ion：抓住意思 → 理解力",
+  "cue": "台球杆 cue 一点 → 提示",
+  "broaden": "broad(宽) + en(使) → 使变宽／增长",
+  "deadline": "dead(死) + line(线) → 死线 → 截止日期",
+  "undertake": "under(下) + take(拿)：把担子拿到身下 → 承担",
+  "stick": "粘／枝条",
+  "abroad": "a(在) + broad(宽)：在宽阔的远处 → 国外",
+  "clue": "clue 本义线团：顺着线走出迷宫 → 线索",
+  "society": "soci(同伴) + ety → 社会",
+  "board": "木板 → 开会那块板 → 董事会；登船那块板 → 登上",
+  "mix": "混合",
+  "almost": "al(全) + most(最)：几乎全部 → 几乎",
+  "below": "be(在) + low(低) → 在下面",
+  "beneath": "be(在) + neath(下面) → 在……下面",
+  "broadcast": "broad(广) + cast(撒) → 广泛撒出去 → 广播"
+};
+let _lpAt = 0;   // 长按时间戳，用来吞掉长按后的那次点击
 let filter = 'all';
 let filterUnit = 'all';
 
@@ -597,13 +909,47 @@ function render(){
     wline.append(num, wEl);
 
     const zhEl = document.createElement('div');
-    zhEl.className='zh'; zhEl.textContent = r.zh || '（无释义）';
+    zhEl.className='zh';
+    const zhTxt = document.createElement('div');
+    zhTxt.textContent = r.zh || '（无释义）';
+    zhEl.appendChild(zhTxt);
+    const tipTxt = TIPS[key];
+    if(tipTxt){
+      const tipEl = document.createElement('div');
+      tipEl.className = 'tip';
+      tipEl.textContent = '记法：' + tipTxt;
+      zhEl.appendChild(tipEl);
+    }
     if(globalZh) c.classList.add('open');        // 全局展开
 
     c.append(dot, wline, zhEl);
 
+    // 长按 450ms 展开（和点一下效果一样，加个顺手的手势）
+    let _lpTimer = null, _lpMoved = false, _lpStart = null;
+    c.addEventListener('touchstart', ev=>{
+      _lpMoved = false;
+      const t = ev.touches && ev.touches[0];
+      _lpStart = t ? { x:t.clientX, y:t.clientY } : null;
+      clearTimeout(_lpTimer);
+      _lpTimer = setTimeout(()=>{
+        if(_lpMoved) return;
+        c.classList.add('open');
+        _lpAt = Date.now();
+        if(navigator.vibrate){ try{ navigator.vibrate(12); }catch(e){} }
+      }, 450);
+    }, {passive:true});
+    c.addEventListener('touchmove', ev=>{
+      const t = ev.touches && ev.touches[0];
+      if(_lpStart && t && (Math.abs(t.clientX-_lpStart.x) > 10 || Math.abs(t.clientY-_lpStart.y) > 10)){
+        _lpMoved = true; clearTimeout(_lpTimer);
+      }
+    }, {passive:true});
+    c.addEventListener('touchend',   ()=>{ clearTimeout(_lpTimer); }, {passive:true});
+    c.addEventListener('touchcancel',()=>{ clearTimeout(_lpTimer); }, {passive:true});
+
     wEl.addEventListener('click', ev=>{
       ev.stopPropagation();
+      if(Date.now() - _lpAt < 350) return;      // 刚长按完，这次点击不作数
       say(r.w);
       c.classList.add('speak');
       document.querySelectorAll('.card.speak').forEach(x=>{ if(x!==c) x.classList.remove('speak'); });
@@ -612,6 +958,7 @@ function render(){
 
     c.addEventListener('click', ev=>{
       ev.stopPropagation();
+      if(Date.now() - _lpAt < 350) return;      // 刚长按完，这次点击不作数
       c.classList.toggle('open');                // 单卡临时翻看，不改全局
     });
 
@@ -821,6 +1168,9 @@ document.getElementById('btnImport').addEventListener('click', ()=>{
   if(!EDIT){ toast('词库是只读的，不能添加或修改'); return; }
   document.getElementById('sheetImport').classList.add('show');
   setTimeout(()=>ta.focus(), 120);
+});
+document.getElementById('btnMethod').addEventListener('click', ()=>{
+  document.getElementById('sheetMethod').classList.add('show');
 });
 document.getElementById('btnHelp').addEventListener('click', ()=>{
   document.getElementById('sheetHelp').classList.add('show');
