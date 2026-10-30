@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f6f7f9">
+<title>单词点读</title>
+<style>
+:root{
+  --bg:#f6f7f9; --card:#fff; --text:#1a1a1a; --sub:#8a8f99; --line:#e6e8ec;
+  --blue:#2f6bff; --green:#1aa36b; --amber:#e8a020; --red:#e24646;
+  --shadow:0 1px 3px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;
+  overscroll-behavior-y:contain}
+
+header{position:sticky;top:0;z-index:20;background:rgba(246,247,249,.95);
+  backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--line)}
+.hd{padding:10px 14px 6px;display:flex;align-items:center;gap:8px}
+.hd h1{font-size:16px;margin:0;font-weight:600;letter-spacing:.2px}
+.hd .cnt{margin-left:auto;font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums}
+.iconbtn{border:1px solid var(--line);background:#fff;border-radius:9px;width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;font-size:16px;color:#555;flex:0 0 auto}
+.hchip{padding:6px 11px;font-size:12.5px;border-radius:9px;flex:0 0 auto;line-height:1.2}
+.hchip.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.bar{height:3px;background:var(--line);margin:0 14px;border-radius:2px;overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:var(--green);transition:width .25s}
+
+.tools{display:flex;gap:6px;padding:8px 14px 10px;overflow-x:auto;scrollbar-width:none}
+.tools::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:#555;
+  font-size:13px;padding:6px 13px;border-radius:16px;cursor:pointer;white-space:nowrap;font-weight:500;transition:.15s}
+.chip.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.chip .n{opacity:.55;margin-left:3px;font-variant-numeric:tabular-nums}
+
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;padding:0 12px 110px}
+@media(min-width:620px){.grid{grid-template-columns:repeat(3,1fr);padding:0 16px 110px}}
+
+.card{position:relative;background:var(--card);border-radius:13px;padding:14px 11px 11px;
+  box-shadow:var(--shadow);border:1px solid transparent;display:flex;flex-direction:column;
+  min-height:98px;overflow:hidden;cursor:pointer;transition:.12s}
+.card:active{transform:scale(.975)}
+.card.s1{border-color:#bfe8d4;background:#f4fcf8}
+.card.s2{border-color:#f3dfae;background:#fffcf3}
+.card.s3{border-color:#f6c9c9;background:#fff6f6}
+.card.speak{box-shadow:0 0 0 2px var(--blue),0 2px 10px rgba(47,107,255,.22)}
+
+.wline{display:flex;gap:7px;align-items:baseline;padding-right:24px}
+.num{font-size:11px;font-weight:600;color:#a9aeb6;font-variant-numeric:tabular-nums;
+  flex:0 0 auto;letter-spacing:.3px;line-height:1.25}
+.w{font-size:19px;font-weight:650;letter-spacing:.2px;line-height:1.25;word-break:break-word}
+@media(min-width:620px){.w{font-size:20px}}
+.dot{position:absolute;top:5px;right:5px;width:30px;height:30px;border-radius:10px;
+  border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:#c3c7cd;line-height:1;z-index:3;padding:0}
+.card.s3 .dot{background:var(--red);border-color:var(--red);color:#fff;font-size:17px}
+
+.zh{margin-top:auto;padding-top:8px;font-size:12.5px;color:var(--sub);line-height:1.45;
+  max-height:0;opacity:0;overflow:hidden;transition:.18s;border-top:1px dashed transparent}
+.card.open .zh{max-height:160px;opacity:1;margin-top:8px;border-top-color:var(--line)}
+
+footer{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(255,255,255,.97);
+  backdrop-filter:blur(12px);border-top:1px solid var(--line);
+  padding:9px 14px calc(9px + env(safe-area-inset-bottom));
+  display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--sub)}
+footer .item{display:flex;align-items:center;gap:5px}
+.sw{width:40px;height:23px;border-radius:12px;background:#d8dbe1;position:relative;transition:.18s;flex:0 0 auto}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:.18s}
+.sw.on{background:var(--blue)}
+.sw.on::after{left:19px}
+footer .grow{margin-left:auto}
+
+/* 弹层 */
+.sheet{position:fixed;inset:0;z-index:60;background:rgba(20,22,26,.5);display:none;
+  align-items:flex-end;justify-content:center}
+.sheet.show{display:flex}
+.sheet .box{background:#fff;border-radius:18px 18px 0 0;width:100%;max-width:560px;
+  padding:18px 18px calc(18px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}
+@media(min-width:620px){.sheet{align-items:center}.sheet .box{border-radius:18px}}
+.sheet h2{margin:0 0 6px;font-size:16.5px}
+.sheet p{margin:0 0 12px;font-size:12.5px;color:var(--sub);line-height:1.6}
+textarea{width:100%;height:190px;border:1px solid var(--line);border-radius:11px;padding:12px;
+  font-size:14px;line-height:1.7;font-family:ui-monospace,Menlo,Consolas,monospace;resize:vertical;outline:none}
+textarea:focus{border-color:var(--blue)}
+#inUnit{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+  font-size:14px;margin-bottom:10px;outline:none;font-family:inherit}
+#inUnit:focus{border-color:var(--blue)}
+.unitbar{display:none;gap:6px;padding:0 14px 8px;overflow-x:auto;scrollbar-width:none}
+.unitbar.show{display:flex}
+.unitbar::-webkit-scrollbar{display:none}
+.unitbar .chip{font-size:12px;padding:5px 11px;border-radius:14px;background:#f0f2f5;border-color:transparent;color:#666}
+.unitbar .chip.on{background:#2f6bff;color:#fff;border-color:#2f6bff}
+.pv{font-size:12.5px;color:var(--sub);margin:9px 0 0;min-height:18px}
+.pv b{color:var(--green)}
+.row{display:flex;gap:9px;margin-top:14px}
+.btn{flex:1;padding:13px;border:0;border-radius:11px;font-size:15px;font-weight:600;cursor:pointer}
+.btn.primary{background:#1a1a1a;color:#fff}
+.btn.ghost{background:#f1f3f6;color:#333}
+.btn.danger{background:#fdecec;color:#c0392b}
+.help li{font-size:13px;line-height:1.85;color:#444}
+
+#toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(12px);
+  background:rgba(20,22,26,.9);color:#fff;font-size:13px;padding:10px 18px;border-radius:20px;
+  opacity:0;pointer-events:none;transition:.22s;z-index:80;white-space:nowrap;max-width:88vw;overflow:hidden;text-overflow:ellipsis}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <h1 id="title">U1 L1–L4 单词</h1>
+    <span class="cnt" id="cnt">—</span>
+    <button class="chip hchip" id="btnZh" title="显示 / 隐藏全部汉语">汉语</button>
+    <button class="iconbtn" id="btnImport" title="导入单词">＋</button>
+  </div>
+  <div class="bar"><i id="barI"></i></div>
+  <div class="tools" id="tools">
+    <button class="chip on" data-f="all">全部 <span class="n" id="nAll">0</span></button>
+    <button class="chip" data-f="todo">未标 <span class="n" id="nTodo">0</span></button>
+    <button class="chip" data-f="x">× 不会 <span class="n" id="nX">0</span></button>
+    <button class="chip" data-f="mine">我加的 <span class="n" id="nMine">0</span></button>
+  </div>
+  <div class="tools unitbar" id="units"></div>
+</header>
+
+<main class="grid" id="grid"></main>
+
+<footer>
+  <div class="item"><div class="sw on" id="swZh"></div><span>汉语</span></div>
+  <div class="item"><div class="sw" id="swSlow"></div><span>慢速</span></div>
+  <div class="grow"></div>
+  <button class="chip" id="btnAccent">美音</button>
+  <button class="chip" id="btnHelp">说明</button>
+</footer>
+
+<!-- 导入弹层 -->
+<div class="sheet" id="sheetImport">
+  <div class="box">
+    <h2>导入单词</h2>
+    <p>一行一个词，从微信/文档直接粘进来就行。自动识别这些格式：<br>
+      <code>01 avoid v. 避免；回避</code>　<code>avoid,避免</code><br>
+      <code>1 avoid 避免</code>　<code>avoid　　避免</code><br>
+      <b style="color:#1aa36b">行首的数字会被当作序号原样保留</b>，没有数字才自动排。</p>
+    <input id="inUnit" placeholder="单元名称（留空 = 自动命名）" autocomplete="off">
+    <textarea id="taImport" placeholder="01 avoid v. 避免；回避&#10;02 enable v. 使能够&#10;03 captain n. 船长；机长"></textarea>
+    <div class="pv" id="pvImport"></div>
+    <div class="row">
+      <button class="btn ghost" data-close>取消</button>
+      <button class="btn primary" id="btnDoImport">确认导入</button>
+    </div>
+  </div>
+</div>
+
+<!-- 说明弹层 -->
+<div class="sheet" id="sheetHelp">
+  <div class="box">
+    <h2>怎么用</h2>
+    <ul class="help" style="padding-left:18px;margin:0 0 6px">
+      <li><b>点英文单词</b> → 朗读一遍</li>
+      <li><b>顶部「汉语」按钮</b>（或底部开关）→ 一键隐藏 / 一键显示全部汉语</li>
+      <li><b>点卡片空白处</b> → 只翻这一张，方便当场核对</li>
+      <li><b>点右上角小方块</b> → 标记「不会」，再点一下取消</li>
+      <li>标记自动保存在本机，关掉再开还在</li>
+    </ul>
+    <p class="ro-note" style="display:none;margin:14px 0 0;font-size:12.5px;color:#8a8f99;line-height:1.7">
+      此页词库是<b>只读</b>的：不能添加、不能修改。标记只保存在你自己的设备上，不影响别人。
+    </p>
+    <h2 style="margin-top:16px" class="editsec">以后加词</h2>
+    <ul class="help editsec" style="padding-left:18px;margin:0">
+      <li>右上角 <b>＋</b> → 粘贴 → 确认导入</li>
+      <li><b>序号以你文本为准</b>：行首的 01 / 1 / 1、 原样保留，页面不另编号</li>
+      <li>没有序号的行，才从本单元最大值往后自动排</li>
+      <li>可填「单元名称」，不同批次分开筛；不填按「第N批」自动命名</li>
+      <li>同一个英文重复导入 = 更新释义，不重复，也不会改你原来的序号</li>
+      <li>本页「说明」里的 <b>备份全部单词</b> → 导出一份 txt，换设备时粘回去即可</li>
+    </ul>
+    <div class="row" style="margin-top:16px">
+      <button class="btn ghost" data-close>关闭</button>
+    </div>
+    <div class="row" style="margin-top:9px">
+      <button class="btn ghost" id="btnExport">备份全部单词</button>
+      <button class="btn danger" id="btnResetMarks">清空标记</button>
+    </div>
+    <p style="margin-top:14px;font-size:12px;line-height:1.7">
+      <b>发音源</b>：默认用有道词典的真人录音（美音），点底部「美音/英音」可切换。
+      没网络时会自动退回系统合成音。慢速开关对真人音是放慢播放，不改变音调。
+    </p>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* 内置词库（已内嵌，保证单文件也能跑）
+   加词请用右上角「＋」导入，不要改这里 */
+window.BUILTIN_WORDS = [
+  [1, "avoid", "v. 避免；回避"],
+  [2, "enable", "v. 使能够"],
+  [3, "captain", "n. 船长；机长　v. 担任……的队长"],
+  [4, "behave", "v. 表现，举止"],
+  [5, "actual", "adj. 实际的；真实的"],
+  [6, "practice", "n. 训练；实践；练习"],
+  [7, "virtual", "adj. 事实上的；实际上的；虚拟的"],
+  [8, "tuition", "n. 教学；学费"],
+  [9, "capital", "n. 首都；资本；大写字母"],
+  [10, "capable", "adj. 有能力的；有才能的；能胜任的"],
+  [11, "coach", "n. 长途客车；教练；经济舱　v. 训练，培训"],
+  [12, "training", "n. 训练，培训；锻炼"],
+  [13, "able", "adj. 能够；有才能的"],
+  [14, "action", "n. 行为，行动；功能，作用"],
+  [15, "capture", "v. 捕获　n. (被)捕获"],
+  [16, "capacity", "n. 容量；能力"],
+  [17, "exact", "adj. 准确的，精确的"],
+  [18, "precise", "adj. 精确的，确切的"],
+  [19, "active", "adj. 积极的；忙碌的；活跃的"],
+  [20, "activity", "n. 活动；活跃"],
+  [21, "evade", "v. 逃避；回避"],
+  [22, "ability", "n. 能力；本领；才能"],
+  [23, "react", "v. 反应，反应"],
+  [24, "tutor", "n. 导师；家庭教师，私人教师　v. 指导"],
+  [25, "train", "n. 火车　v. 培训，训练"],
+  [26, "practical", "adj. 实际的；真实的；客观存在的"],
+  [27, "practise", "v. 练习；实践；训练（=practice）"],
+  [28, "handicap", "n. 残疾；障碍　v. 妨碍"],
+  [29, "act", "n. 行动；行为　v. 行动，做事"],
+  [30, "disabled", "adj. 残废的；残障的"],
+  [31, "escape", "v. 逃避；逃跑，逃脱　n. 逃跑"],
+  [32, "scholarship", "n. 奖学金"],
+  [33, "campaign", "n. 运动；活动"],
+  [34, "expert", "n. 专家　adj. 专家的"],
+  [35, "miracle", "n. 奇迹"],
+  [36, "bloom", "n. 花　v. 开花"],
+  [37, "term", "n. 学期；术语；任期"],
+  [38, "curriculum", "n. 课程"],
+  [39, "camp", "n. 营地　v. 宿营；露营"],
+  [40, "share", "v. 分担，分享　n. 一份；股份"],
+  [41, "educate", "v. 教育；教导"],
+  [42, "cover", "v. 覆盖；占；包括　n. 覆盖物；封面，封底"],
+  [43, "discover", "v. 发现；发觉；了解到"],
+  [44, "pound", "n. 英镑；磅"],
+  [45, "complain", "v. 抱怨；埋怨"],
+  [46, "resort", "n. 度假胜地；求助　v. 求助；采取"],
+  [47, "loom", "v. 隐现；显得突出　n. 织布机"],
+  [48, "mirror", "n. 镜子"],
+  [49, "bury", "v. 埋葬；隐藏"],
+  [50, "relax", "v. 放松；休息"],
+  [51, "calm", "v. 使平静　adj. 平静的"],
+  [52, "sort", "n. 种类　v. 把……分类，整理"],
+  [53, "professional", "adj. 职业的；专业的　n. 专家"],
+  [54, "ethic", "n. 道德准则"],
+  [55, "recover", "v. 康复；恢复；找回"],
+  [56, "education", "n. 教育"],
+  [57, "confess", "v. 承认，坦白；忏悔"],
+  [58, "invite", "v. 邀请；招致"],
+  [59, "admire", "v. 钦佩；赞赏；欣赏"],
+  [60, "profession", "n. 职业；专业"],
+  [61, "misery", "n. 痛苦；悲惨"],
+  [62, "boom", "v./n. (发出)隆隆声；激增"],
+  [63, "scholar", "n. 学者；奖学金获得者"],
+  [64, "uncover", "v. 揭开盖子；揭露；发现"],
+  [65, "mask", "n. 面具；伪装　v. 掩饰，掩盖"],
+  [66, "mere", "adj. 仅仅，只不过"],
+  [67, "wire", "n. 金属线；电线　v. 用导线接通电源"],
+  [68, "worship", "n./v. 崇拜，敬仰；礼拜"],
+  [69, "sole", "adj. 仅有的，唯一的"],
+  [70, "compound", "n. 混合物；复合词　adj. 复合的"],
+  [71, "dare", "v. 敢于；胆敢"],
+  [72, "complicate", "v. 使复杂化"],
+  [73, "moral", "adj. 道德的　n. 道德"],
+  [74, "misunderstand", "v. 误解；误会"],
+  [75, "magic", "n. 魔法，魔术　adj. 有魔力的"],
+  [76, "mature", "adj. 成熟的，成年的"],
+  [77, "professor", "n. 教授；(大学的)讲师，教员"],
+  [78, "bomb", "n. 炸弹　v. 轰炸"],
+  [79, "boost", "v. 促进；增长　n. 增长"],
+  [80, "campus", "n. 校园"],
+  [81, "complex", "n. 建筑群；情结　adj. 复杂的；复合的"],
+  [82, "screen", "n. 屏幕，银幕，荧光屏"],
+  [83, "alarm", "v. 使不安，使惊恐　n. 惊恐；警报"],
+  [84, "academic", "n. 大学教师，学者　adj. 学术的"],
+  [85, "bend", "v. (使)弯曲　n. 拐弯"],
+  [86, "principle", "n. 道德原则；法则，原则"],
+  [87, "resident", "n. 居民　adj. 居住的"],
+  [88, "besides", "adv. 此外；而且　prep. 除……以外(还)"],
+  [89, "freshman", "n. (大学)一年级新生"],
+  [90, "join", "v. 参加，结合"],
+  [91, "habit", "n. 习惯；习性"],
+  [92, "integrate", "v. (使)合并，成为一体"],
+  [93, "undergraduate", "n. 本科生"],
+  [94, "immigrate", "v. (从外地)移居；移民"],
+  [95, "exception", "n. 例外"],
+  [96, "level", "n. 水平"],
+  [97, "bond", "n. 纽带；联系　v. (使)牢固结合"],
+  [98, "dormitory", "n. 集体寝室；宿舍"],
+  [99, "degree", "n. 程度，度数；(大学)学位"],
+  [100, "bridge", "n. 桥；桥梁"],
+  [101, "rank", "n. 地位，级别；等级　v. 把……分等级"],
+  [102, "course", "n. 课程；过程；进展"],
+  [103, "thesis", "n. 论文，毕业论文；论点"],
+  [104, "separate", "v. (使)分开；区别　adj. 单独的；不同的"],
+  [105, "check", "v. 检查，核对　n. 检查"],
+  [106, "integrity", "n. 诚实正直；完整，完好"],
+  [107, "bind", "v. 捆绑，系；结合；约束"],
+  [108, "step", "n. 步骤；步伐　v. 踏，踩；迈步"],
+  [109, "scale", "n. 规模；范围；程度；等级"],
+  [110, "senior", "adj. 级别高的；年长的　n. 长辈；上级"],
+  [111, "connect", "v. 连接；联系"],
+  [112, "veteran", "n. 老兵；老手；经验丰富的人"],
+  [113, "link", "n. 联系；连接　v. 把……连接起来"],
+  [114, "junior", "adj. 级别低的；青少年的　n. 青少年"],
+  [115, "inhabit", "v. 栖居于；居住于"],
+  [116, "discipline", "n. 纪律；学科；训练"],
+  [117, "examine", "v. 检查；调查；测验"],
+  [118, "joint", "n. 关节，接头　adj. 联合的"],
+  [119, "graduate", "n. 大学毕业生；学士学位获得者"],
+  [120, "gradually", "adv. 逐渐地；渐进地"],
+  [121, "twist", "v. 使弯曲；使扭曲变形　n. 扭动"],
+  [122, "case", "n. 实例；诉讼；容器；情况"],
+  [123, "migration", "n. 迁移；移居；迁徙"],
+  [124, "except", "prep. 除……外　conj. 除了"],
+  [125, "combine", "v. (使)结合；联合"],
+  [126, "principal", "n. 校长；首长　adj. 最重要的，主要的"],
+  [127, "sophisticated", "adj. 见识广的；老练的；精密的"],
+  [128, "president", "n. 总统；董事长；总经理；(大学)校长"],
+  [129, "forward", "adv. 向前　adj. 向前的　v. 发送，促进"],
+  [130, "undermine", "v. 逐渐削弱；破坏"],
+  [131, "comprehensive", "adj. 全面的，详尽的；综合的"],
+  [132, "headline", "n. 大字标题，头条；新闻摘要"],
+  [133, "community", "n. 社区；社会"],
+  [134, "aboard", "adv./prep. 在(船、飞机、火车)上"],
+  [135, "forth", "adv. 向前"],
+  [136, "touch", "v. 触摸；感动　n. 触觉；触摸"],
+  [137, "content", "n. 内容　adj. 满意的　v. 使满意"],
+  [138, "thread", "n. 线；思路，线索　v. 穿线于"],
+  [139, "nature", "n. 自然；大自然，本性"],
+  [140, "attach", "v. 贴上；(使)与……有联系；重视"],
+  [141, "ground", "n. 地，地面；场地"],
+  [142, "branch", "n. 树枝；分支；支流"],
+  [143, "background", "n. 背景；幕后"],
+  [144, "foresee", "v. 预见，预知"],
+  [145, "social", "adj. 社会的；社交的"],
+  [146, "wide", "adj. 宽的；广泛的"],
+  [147, "ahead", "adv. 向前；提前；领先"],
+  [148, "wild", "adj. 野生的，狂热的　n. 野生环境"],
+  [149, "underground", "n. 地铁　adj./adv. 在地下(的)"],
+  [150, "communicate", "v. 交流，沟通"],
+  [151, "association", "n. 协会，社团；联系"],
+  [152, "tent", "n. 帐篷"],
+  [153, "underneath", "adv./prep. 在……下面　n. 底部"],
+  [154, "random", "adj. 任意的；随意的"],
+  [155, "underline", "v. 在下面画线；强调，重视"],
+  [156, "mostly", "adv. 主要地，通常"],
+  [157, "adhere", "v. 附着；遵循；坚持"],
+  [158, "bottom", "n. 底部　adj. 底部的；最后的"],
+  [159, "contact", "n. 联系；接触　v. 联系"],
+  [160, "determine", "v. 查明；决定；支配，影响"],
+  [161, "confront", "v. 面临，面对；对抗"],
+  [162, "nearby", "adj. 附近的　adv. 在附近"],
+  [163, "stir", "n. 激动；搅动　v. 搅拌；激发"],
+  [164, "natural", "adj. 自然的；正常的；天生的"],
+  [165, "bacteria", "n. 细菌"],
+  [166, "undergo", "v. 经历，经受"],
+  [167, "neighbour", "n. 邻居；邻国（美式 neighbor）"],
+  [168, "outline", "n. 轮廓；梗概　v. 概述"],
+  [169, "satisfy", "v. 使满意；使满足"],
+  [170, "mutual", "adj. 相互的，彼此的；共同的"],
+  [171, "associate", "v. 联系；交往　n. 同事；伙伴"],
+  [172, "outdoors", "adv. 在户外；在野外"],
+  [173, "width", "n. 宽度；广度"],
+  [174, "neighbourhood", "n. 街坊，四邻；附近地区（美式 neighborhood）"],
+  [175, "broad", "adj. 宽阔的；广泛的"],
+  [176, "under", "adv. 在下面；低于　prep. 在……下面"],
+  [177, "nearly", "adv. 差不多，几乎"],
+  [178, "comprehension", "n. 理解力；领悟能力"],
+  [179, "cue", "n. 暗示，提示　v. 给……暗示"],
+  [180, "broaden", "v. 变宽，变阔；增长经验"],
+  [181, "deadline", "n. 截止日期，最终期限"],
+  [182, "undertake", "v. 承担；从事；着手做"],
+  [183, "stick", "v. 粘贴，粘着　n. 枝条"],
+  [184, "abroad", "adv. 到国外，在国外"],
+  [185, "clue", "n. 线索；提示"],
+  [186, "society", "n. 社会；社团"],
+  [187, "board", "n. 木板；董事会　v. 登上(船、飞机等)"],
+  [188, "mix", "n. 混合　v. (使)混合；配制"],
+  [189, "almost", "adv. 几乎；差不多"],
+  [190, "below", "prep. 在……下面　adv. 在下面；下级"],
+  [191, "beneath", "prep. 在……下面，在……下方"],
+  [192, "broadcast", "v. 广播；散布　n. 广播节目"]
+];
+</script>
+<script>
+/* ================= 数据 ================= */
+/* 出错时把错误显示在页面上，避免白屏 */
+window.addEventListener('error', function(e){
+  try{
+    var g = document.getElementById('grid');
+    if(g && !g.children.length){
+      var d = document.createElement('div');
+      d.style.cssText = 'grid-column:1/-1;padding:22px;color:#c0392b;font-size:12px;line-height:1.7;word-break:break-all;text-align:left';
+      d.textContent = '脚本出错：' + (e.message || e.error) + '　@行' + (e.lineno || '?');
+      g.appendChild(d);
+    }
+  }catch(_){}
+});
+
+const LS_MARKS = 'wd_marks_v2';
+const LS_CUSTOM = 'wd_custom_v2';
+const UNIT_DEFAULT = 'U1 L1–L4';
+
+let builtin = (window.BUILTIN_WORDS || []).map(r => ({ n:r[0], w:r[1], zh:r[2]||'', mine:false, unit:UNIT_DEFAULT }));
+
+let custom = [];
+try{ custom = JSON.parse(localStorage.getItem(LS_CUSTOM) || '[]'); }catch(e){ custom = []; }
+custom = custom.map(r => ({ n:r.n, w:r.w, zh:r.zh||'', mine:true, unit:r.unit || '自建' }));
+
+let marks = {};
+try{ marks = JSON.parse(localStorage.getItem(LS_MARKS) || '{}'); }catch(e){ marks = {}; }
+// 旧数据是 √/?/× 三态，这里统一压成「不会」一个状态
+for(const k in marks){ if(marks[k]) marks[k] = 1; else delete marks[k]; }
+
+function saveMarks(){ try{ localStorage.setItem(LS_MARKS, JSON.stringify(marks)); }catch(e){} }
+function saveCustom(){ try{ localStorage.setItem(LS_CUSTOM, JSON.stringify(custom)); }catch(e){} }
+
+function allWords(){
+  // 自定义词覆盖同名词
+  const map = new Map();
+  for(const r of builtin) map.set(r.w.toLowerCase(), r);
+  for(const r of custom)  map.set(r.w.toLowerCase(), r);
+  const arr = [...map.values()];
+  // 按「单元首次出现顺序 → 序号 → 字母」排序
+  const uo = new Map(); uo.set(UNIT_DEFAULT, 0);
+  let k = 1;
+  for(const r of arr) if(!uo.has(r.unit)) uo.set(r.unit, k++);
+  arr.sort((a,b)=> (uo.get(a.unit) - uo.get(b.unit)) || (a.n - b.n) || a.w.localeCompare(b.w));
+  return arr;
+}
+
+function unitList(){
+  const seen = [];
+  for(const r of allWords()) if(!seen.includes(r.unit)) seen.push(r.unit);
+  return seen;
+}
+
+function nextNoInUnit(unit){
+  const used = allWords().filter(r => r.unit === unit).map(r => r.n);
+  return (used.length ? Math.max(...used) : 0) + 1;
+}
+
+/* ================= 语音 ================= */
+/* 优先用有道真人录音；失败退回系统合成音 */
+const canSpeak = 'speechSynthesis' in window;
+let voice = null;
+function pickVoice(){
+  const vs = speechSynthesis.getVoices() || [];
+  const en = vs.filter(v => /^en/i.test(v.lang));
+  if(!en.length) return;
+  voice = en.find(v => /en-US/i.test(v.lang) && /samantha|zira|aria|jenny|google us/i.test(v.name))
+       || en.find(v => /en-US/i.test(v.lang))
+       || en[0];
+}
+if(canSpeak){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+
+const LS_ACCENT = 'wd_accent_v2';
+const ACCENT_LABEL = { us:'美音', uk:'英音', sys:'系统音' };
+const ACCENT_NEXT  = { us:'uk',   uk:'sys',   sys:'us' };
+
+function lsGet(k, def){
+  try{ const v = localStorage.getItem(k); return (v===null||v===undefined) ? def : v; }
+  catch(e){ return def; }
+}
+let accent = lsGet(LS_ACCENT, 'us');
+if(!ACCENT_LABEL[accent]) accent = 'us';   // us | uk | sys
+
+const audioEl = new Audio();
+audioEl.preload = 'auto';
+let lastUrl = '';
+let useLocalOnly = false;
+
+function sayLocal(text){
+  if(!canSpeak || !text) return;
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US';
+    u.rate = swSlow.classList.contains('on') ? 0.6 : 0.9;
+    if(voice) u.voice = voice;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+function sayRemote(word){
+  const type = accent === 'uk' ? 1 : 2;
+  const url = 'https://dict.youdao.com/dictvoice?audio=' + encodeURIComponent(word) + '&type=' + type;
+  if(url === lastUrl){
+    try{ audioEl.pause(); audioEl.currentTime = 0; }catch(e){}
+  }else{
+    audioEl.src = url;
+    lastUrl = url;
+  }
+  audioEl.playbackRate = swSlow.classList.contains('on') ? 0.75 : 1;
+  try{ audioEl.preservesPitch = true; }catch(e){}
+  const p = audioEl.play();
+  if(p && p.catch){
+    p.catch(()=>{ useLocalOnly = true; sayLocal(word); });
+  }
+}
+
+function say(text){
+  if(!text) return;
+  if(accent === 'sys' || useLocalOnly){ sayLocal(text); return; }
+  sayRemote(text);
+}
+
+audioEl.addEventListener('error', ()=>{ useLocalOnly = true; });
+audioEl.addEventListener('stalled', ()=>{ /* 网络慢不处理 */ });
+
+/* ================= 渲染 ================= */
+const grid  = document.getElementById('grid');
+const tools = document.getElementById('tools');
+const swZh  = document.getElementById('swZh');
+const LS_ZH = 'wd_zh_v2';
+let globalZh = (lsGet(LS_ZH, '1') === '1');      // true = 全部显示汉语
+if(globalZh) swZh.classList.add('on'); else swZh.classList.remove('on');
+const swSlow= document.getElementById('swSlow');
+const CN    = ['', 's1', 's2', 's3'];
+let filter = 'all';
+let filterUnit = 'all';
+
+/* 单元筛选条：单元数 > 1 时才出现 */
+const unitsBar = document.getElementById('units');
+function paintUnits(){
+  const us = unitList();
+  if(us.length <= 1){ unitsBar.classList.remove('show'); unitsBar.innerHTML=''; filterUnit='all'; return; }
+  unitsBar.classList.add('show');
+  const cur = filterUnit;
+  unitsBar.innerHTML = '';
+  const mk = (label, val, n) => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (cur === val ? ' on' : '');
+    b.dataset.u = val;
+    b.textContent = label + (n !== undefined ? '  ' + n : '');
+    unitsBar.appendChild(b);
+  };
+  mk('全部单元', 'all', allWords().length);
+  for(const u of us){
+    mk(u, u, allWords().filter(r=>r.unit===u).length);
+  }
+}
+unitsBar.addEventListener('click', e=>{
+  const b = e.target.closest('.chip[data-u]'); if(!b) return;
+  filterUnit = b.dataset.u;
+  paintUnits(); render();
+});
+
+function render(){
+  const list = allWords();
+  const frag = document.createDocumentFragment();
+  let shown = 0;
+
+  for(const r of list){
+    const key = r.w.toLowerCase();
+    const m = marks[key] ? 1 : 0;
+    if(filterUnit !== 'all' && r.unit !== filterUnit) continue;
+    if(filter==='todo' && m!==0) continue;
+    if(filter==='x'    && m!==1) continue;
+    if(filter==='mine' && !r.mine) continue;
+    shown++;
+
+    const c = document.createElement('div');
+    c.className = 'card ' + (m ? 's3' : '');
+
+    const wline = document.createElement('div');
+    wline.className='wline';
+
+    const num = document.createElement('span');
+    num.className='num';
+    num.textContent = String(r.n).padStart(2,'0');
+
+    const dot = document.createElement('button');
+    dot.className='dot';
+    dot.textContent = m ? '×' : '';
+    dot.setAttribute('aria-label', m ? '取消标记' : '标记为不会');
+    dot.addEventListener('click', ev=>{
+      ev.stopPropagation();
+      // 两态：空白 ←→ 不会
+      if(marks[key]) delete marks[key]; else marks[key] = 1;
+      saveMarks(); render();
+    });
+
+    const wEl = document.createElement('div');
+    wEl.className='w'; wEl.textContent = r.w;
+    wline.append(num, wEl);
+
+    const zhEl = document.createElement('div');
+    zhEl.className='zh'; zhEl.textContent = r.zh || '（无释义）';
+    if(globalZh) c.classList.add('open');        // 全局展开
+
+    c.append(dot, wline, zhEl);
+
+    wEl.addEventListener('click', ev=>{
+      ev.stopPropagation();
+      say(r.w);
+      c.classList.add('speak');
+      document.querySelectorAll('.card.speak').forEach(x=>{ if(x!==c) x.classList.remove('speak'); });
+      setTimeout(()=>c.classList.remove('speak'), 900);
+    });
+
+    c.addEventListener('click', ev=>{
+      ev.stopPropagation();
+      c.classList.toggle('open');                // 单卡临时翻看，不改全局
+    });
+
+    frag.appendChild(c);
+  }
+
+  grid.innerHTML='';
+  grid.appendChild(frag);
+
+  if(shown===0){
+    const e=document.createElement('div');
+    e.style.cssText='grid-column:1/-1;text-align:center;color:#b0b4ba;padding:48px 0;font-size:13px;line-height:1.8';
+    e.innerHTML = (list.length===0)
+      ? '词库空了<br><span style="font-size:12px;color:#c8ccd2">点右上角 ＋ 导入，或刷新页面</span>'
+      : '这个分类下没有词<br><span style="font-size:12px;color:#c8ccd2">换个分类看看</span>';
+    grid.appendChild(e);
+  }
+  paintUnits();
+  const scoped = (filterUnit === 'all') ? list : list.filter(r => r.unit === filterUnit);
+  paint(scoped);
+}
+
+function paint(list){
+  list = list || allWords();
+  let x=0, mine=0;
+  for(const r of list){
+    if(r.mine) mine++;
+    if(marks[r.w.toLowerCase()]) x++;
+  }
+  const done = x, total = list.length;
+  const eX = document.getElementById('nX'); if(eX) eX.textContent = x;
+  const eT = document.getElementById('nTodo'); if(eT) eT.textContent = total-done;
+  const eA = document.getElementById('nAll'); if(eA) eA.textContent = total;
+  const eM = document.getElementById('nMine'); if(eM) eM.textContent = mine;
+  document.getElementById('cnt').textContent   = `不会 ${done} / ${total}`;
+  document.getElementById('barI').style.width  = total ? (done/total*100).toFixed(1)+'%' : '0%';
+}
+
+/* ================= 解析导入 ================= */
+const POS = '(?:vt|vi|v|n|adj|adv|prep|conj|pron|num|art|int)\\.';
+
+function parseLine(raw){
+  let s = String(raw).replace(/\u3000/g,' ').replace(/\s+/g,' ').trim();
+  if(!s) return null;
+
+  // 行首数字 = 原文序号，保留
+  let num = null;
+  const nm = s.match(/^(\d{1,4})\s*[\.\、\)\:：]?\s*/);
+  if(nm){ num = parseInt(nm[1], 10); s = s.slice(nm[0].length).trim(); }
+  if(!s) return null;
+
+  // 找第一个中文字符
+  const i = s.search(/[\u4e00-\u9fa5]/);
+  if(i < 0){
+    // 纯英文行
+    const only = s.replace(/\s+/g,' ').trim();
+    if(/^[A-Za-z][A-Za-z\-'’ ]{0,40}$/.test(only)) return { num, w: only.toLowerCase(), zh: '' };
+    return null;
+  }
+  let left  = s.slice(0, i).trim();
+  let right = s.slice(i).trim();
+
+  // 从 left 末尾剥出词性
+  const pm = left.match(new RegExp('(' + POS + ')\\s*$', 'i'));
+  if(pm){
+    right = pm[1].replace(/\s+/g,'') + ' ' + right;
+    left  = left.slice(0, pm.index).trim();
+  }
+  left = left.replace(/[\s,，;；:：\-–—\/]+$/,'').trim();
+  right= right.replace(/^[\s,，;；:：]+/,'').trim();
+
+  if(!left || !/[A-Za-z]/.test(left)) return null;
+  if(!/^[A-Za-z][A-Za-z\-'’ .]{0,40}$/.test(left)) return null;
+  return { num, w: left.toLowerCase(), zh: right };
+}
+
+const ta = document.getElementById('taImport');
+const pv = document.getElementById('pvImport');
+let parsedCache = [];
+
+function preview(){
+  const lines = ta.value.split(/\r?\n/);
+  const out = [], bad = [];
+  for(const ln of lines){
+    if(!ln.trim()) continue;
+    const r = parseLine(ln);
+    if(r) out.push(r); else bad.push(ln.trim().slice(0,26));
+  }
+  parsedCache = out;
+  if(!out.length && !bad.length){ pv.innerHTML=''; return; }
+  const withNo = out.filter(r => r.num !== null).length;
+  let html = `识别到 <b>${out.length}</b> 个词`;
+  if(withNo) html += `（其中 <b>${withNo}</b> 个带序号，按原文保留）`;
+  if(bad.length) html += `　<span style="color:#c0392b">${bad.length} 行没认出来</span>`;
+  pv.innerHTML = html;
+}
+ta.addEventListener('input', preview);
+
+/* 单元名默认值 */
+const inUnit = document.getElementById('inUnit');
+function suggestUnit(){
+  const us = unitList();
+  const m = new RegExp('^第(\\d+)批$');
+  let mx = 0;
+  for(const u of us){ const mm = u.match(m); if(mm) mx = Math.max(mx, +mm[1]); }
+  inUnit.placeholder = '单元名称（留空 = 第' + (mx+1) + '批）';
+}
+inUnit.addEventListener('focus', suggestUnit);
+suggestUnit();
+
+document.getElementById('btnDoImport').addEventListener('click', ()=>{
+  if(!EDIT){ closeSheets(); toast('词库是只读的'); return; }
+  preview();
+  if(!parsedCache.length){ toast('没识别到可导入的词'); return; }
+
+  // 单元名
+  let unit = (inUnit.value || '').trim();
+  if(!unit){
+    const us = unitList();
+    const m = new RegExp('^第(\\d+)批$');
+    let mx = 0;
+    for(const u of us){ const mm = u.match(m); if(mm) mx = Math.max(mx, +mm[1]); }
+    unit = '第' + (mx+1) + '批';
+  }
+
+  const map = new Map(custom.map(r => [r.w.toLowerCase(), r]));
+  let add = 0, upd = 0, auto = nextNoInUnit(unit);
+  for(const p of parsedCache){
+    const w = p.w;
+    if(map.has(w)){
+      // 已存在：只更新释义，不动序号（避免打乱原批次）
+      if(p.zh) map.get(w).zh = p.zh;
+      upd++;
+    }else{
+      // 新词：用你原文的序号；没序号才自动排（接着本批最大值往后）
+      let n;
+      if(p.num !== null && p.num !== undefined){
+        n = p.num;
+        if(n >= auto) auto = n + 1;     // 保持 auto 追着本批最大号
+      }else{
+        n = auto++;
+      }
+      map.set(w, { n, w, zh: p.zh || '', mine: true, unit });
+      add++;
+    }
+  }
+  custom = [...map.values()];
+  saveCustom();
+  ta.value=''; inUnit.value=''; pv.innerHTML=''; parsedCache=[];
+  closeSheets();
+  render();
+  toast(`「${unit}」新增 ${add} 个，更新 ${upd} 个`);
+});
+
+/* ================= 备份 ================= */
+document.getElementById('btnExport').addEventListener('click', ()=>{
+  const list = allWords();
+  const lines = list.map(r => `${String(r.n).padStart(2,'0')} ${r.w} ${r.zh}`.trim());
+  const txt = lines.join('\n');
+  const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `单词备份_${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+  toast(`已导出 ${list.length} 个词`);
+});
+
+/* ================= 交互 ================= */
+const btnAccent = document.getElementById('btnAccent');
+function paintAccent(){ btnAccent.textContent = ACCENT_LABEL[accent]; }
+btnAccent.addEventListener('click', ()=>{
+  accent = ACCENT_NEXT[accent];
+  try{ localStorage.setItem(LS_ACCENT, accent); }catch(e){}
+  useLocalOnly = false; lastUrl = '';
+  paintAccent();
+  toast('发音源：' + ACCENT_LABEL[accent]);
+  say('hello');
+});
+paintAccent();
+
+tools.addEventListener('click', e=>{
+  const b = e.target.closest('.chip[data-f]'); if(!b) return;
+  document.querySelectorAll('.chip[data-f]').forEach(c=>c.classList.remove('on'));
+  b.classList.add('on');
+  filter = b.dataset.f;
+  render();
+});
+const btnZh = document.getElementById('btnZh');
+function paintZh(){
+  swZh.classList.toggle('on', globalZh);
+  btnZh.classList.toggle('on', globalZh);
+}
+function setZh(v){
+  globalZh = !!v;
+  paintZh();
+  try{ localStorage.setItem(LS_ZH, globalZh ? '1' : '0'); }catch(e){}
+  render();
+  toast(globalZh ? '已显示全部汉语' : '已隐藏全部汉语');
+}
+btnZh.addEventListener('click', ()=> setZh(!globalZh));
+swZh.addEventListener('click', ()=> setZh(!globalZh));
+paintZh();
+swSlow.addEventListener('click', ()=> swSlow.classList.toggle('on'));
+
+document.getElementById('btnImport').addEventListener('click', ()=>{
+  if(!EDIT){ toast('词库是只读的，不能添加或修改'); return; }
+  document.getElementById('sheetImport').classList.add('show');
+  setTimeout(()=>ta.focus(), 120);
+});
+document.getElementById('btnHelp').addEventListener('click', ()=>{
+  document.getElementById('sheetHelp').classList.add('show');
+});
+document.querySelectorAll('[data-close]').forEach(b=>{
+  b.addEventListener('click', closeSheets);
+});
+document.querySelectorAll('.sheet').forEach(s=>{
+  s.addEventListener('click', e=>{ if(e.target===s) closeSheets(); });
+});
+function closeSheets(){
+  document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('show'));
+}
+document.getElementById('btnResetMarks').addEventListener('click', ()=>{
+  if(confirm('清空所有 √ ? × 标记？单词不会删。')){
+    marks={}; saveMarks(); render(); closeSheets(); toast('标记已清空');
+  }
+});
+
+let tId=null;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(tId); tId = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ================= 编辑锁 =================
+   默认只读：隐藏「＋」和「我加的」，导入入口全部失效。
+   需要加词的设备，用带 edit=1 的链接打开一次即可解锁（存在本机）。 */
+const EDIT = (typeof location !== 'undefined' && /[?&]edit=1/.test(location.search))
+          || lsGet('wd_edit', '0') === '1';
+try{
+  if(typeof location !== 'undefined' && /[?&]edit=1/.test(location.search)){
+    localStorage.setItem('wd_edit', '1');
+  }
+}catch(e){}
+
+(function applyLock(){
+  if(EDIT) return;
+  const bi = document.getElementById('btnImport');
+  if(bi){ bi.style.display = 'none'; }
+  const mine = document.querySelector('[data-f="mine"]');
+  if(mine){ mine.style.display = 'none'; }
+  const exp = document.getElementById('btnExport');
+  if(exp){ exp.style.display = 'none'; }
+  document.querySelectorAll('.ro-note').forEach(n => { n.style.display = 'block'; });
+  document.querySelectorAll('.editsec').forEach(n => { n.style.display = 'none'; });
+})();
+
+/* 首次点一下解锁 iOS 语音 */
+let unlocked=false;
+document.addEventListener('touchstart', function once(){
+  if(unlocked) return; unlocked=true;
+  if(canSpeak){ try{ const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); }catch(e){} }
+  document.removeEventListener('touchstart', once);
+}, {passive:true});
+
+render();
+</script>
+</body>
+</html>
